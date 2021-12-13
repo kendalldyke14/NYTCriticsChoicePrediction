@@ -17,9 +17,9 @@ from NYTCriticsChoicePrediction import config
 
 
 def get_nyt_movies(key, year):
-    nyt_data = []
-    titles = []
-    has_more = True
+    nyt_data = []  # all movie data from NYT API return
+    titles = []  # list of only titles, used as query for OMDB data
+    has_more = True  # check if another request is required to get all results
     offset = 0
     while has_more:
         # make API request
@@ -27,42 +27,51 @@ def get_nyt_movies(key, year):
                   "api-key": key}
         r = requests.get('https://api.nytimes.com/svc/movies/v2/reviews/search.json', params=params)
 
-        #
+        # load data as Python dictionary
         data = json.loads(r.text)
 
+        # offset query by an additional 20 and check if an additional iteration is needed
         offset += 20
         has_more = data['has_more']
 
-
+        # add full data and title names to respective lists
         nyt_data.extend(data['results'])
         titles.extend([x['display_title'] for x in data['results']])
+
+        # ensure the request per minute limit is not reached
         time.sleep(6)
 
+    # convert to dataframe and write to CSV
     nyt_df = pd.DataFrame(nyt_data)
     nyt_df.to_csv(f"data/NYTData{year}.csv")
+
     return nyt_data, titles
 
 
 def get_details_from_omdb(key, year, titles):
     omdb_data = []
     for title in titles:
+        # request data for given title
         omdb_params = {"apikey": key, "t": title, "y": year, "plot": "full"}
         omdb_baseurl = "http://www.omdbapi.com/"
         r = requests.get(omdb_baseurl, params=omdb_params)
         data = json.loads(r.text)
 
-        # if the movies was not found, it may be in the OMDB system under a different year
+        # if the movie was not found, it may be in the OMDB system under a different year
         # try taking out the year parameter
         if json.loads(r.text)["Response"] == "False":
             omdb_params = {"apikey": key, "t": title, "plot": "full"}
             r = requests.get(omdb_baseurl, omdb_params)
             data = json.loads(r.text)
 
+        # if the OMDB finds a matching movie, add the dictionary to a list
         if data["Response"] == "True":
             omdb_data.append(data)
 
+    # convert to dataframe and write to CSV
     omdb_df = pd.DataFrame(omdb_data)
     omdb_df.to_csv(f"data/OMDBData{year}.csv")
+
     return omdb_data
 
 
