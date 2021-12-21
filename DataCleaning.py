@@ -23,8 +23,8 @@ def get_nyt_review_text(url,re_cls=re.compile('class="(.*?)"')):
     This function returns the text from the NYT movie review at the "url" input.
 
     Args:
-        url: The url for a NYT movie review. 
-        re_cls: The compiled regex to determine the different css classes existing in a bs4 paragraph object.
+        url [string]: The url for a NYT movie review. 
+        re_cls [re.compile obj]: The compiled regex to determine the different css classes existing in a bs4 paragraph object.
 
     Returns:
         string: The text from a NYT movie review.
