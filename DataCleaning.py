@@ -56,3 +56,34 @@ def get_nyt_review_text(url,re_cls=re.compile('class="(.*?)"')):
             review_text = review_text + paragraphs[i].get_text()
     time.sleep(4) #to reduce load
     return review_text
+
+def get_omdb_awards(df_row, award_col="Awards"):
+    """This function returns new, separated columns with integer values for the awards\
+        a movie has won, from the "awards" column found in the OMDB API response data.
+
+    Args:
+        df_row (pandas DataFrame row): A single row from a pandas DataFrame, containing\
+            a column with string data about the awards a particular movie has been \
+                nominated for, or won.
+        award_col (str): The name of the column containing the Awards string data.
+
+    Returns:
+        [int]: Six integers are returned, containing values for the number of oscar wins,\
+            oscar nominations, emmy wins, emmy nominations, total wins, and total\
+                nominations, respectively.
+    """
+
+    x=str(df_row[[award_col]][0])
+    if "." in x:
+        x=x.split(".")
+        oscar_wins=[int(re.findall(r"\d+",x[0])[0]) if "Won" in x[0] and "Oscar" in x[0] else 0][0]
+        oscar_noms=[int(re.findall(r"\d+",x[0])[0]) if "Nominated" in x[0] and "Oscar" in x[0] else 0][0]
+        emmy_wins=[int(re.findall(r"\d+",x[0])[0]) if "Won" in x[0] and "Emmy" in x[0] else 0][0]
+        emmy_noms=[int(re.findall(r"\d+",x[0])[0]) if "Nominated" in x[0] and "Emmy" in x[0] else 0][0]
+        total_wins=[int(re.findall(r"\d+(?= win)",x[1])[0]) if "win" in x[1] else 0][0]
+        total_noms=[int(re.findall(r"\d+(?= nomination)",x[1])[0]) if "nomination" in x[1] else 0][0]
+    else:
+        oscar_wins, oscar_noms, emmy_wins, emmy_noms=0,0,0,0
+        total_wins=[int(re.findall(r"\d+(?= win)",x)[0]) if "win" in x else 0][0]
+        total_noms=[int(re.findall(r"\d+(?= nomination)",x)[0]) if "nomination" in x else 0][0]
+    return oscar_wins,oscar_noms,emmy_wins,emmy_noms,total_wins,total_noms
