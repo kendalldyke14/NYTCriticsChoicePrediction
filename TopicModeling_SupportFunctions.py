@@ -30,13 +30,16 @@ def get_texts_and_corpus(review_text,bigram_min_count=3,bigram_threshold=10,nlp=
     """This function returns the corpus, id2word, and text outputs needed for processing in Gensim.
 
     Args:
-        review_text ([type]): [description]
-        bigram_min_count (int, optional): [description]. Defaults to 3.
-        bigram_threshold (int, optional): [description]. Defaults to 10.
-        nlp ([type], optional): [description]. Defaults to nlp.
+        review_text (pandas Series): A series, or column from a pandas DataFrame containing text from which topics will be extracted.
+        bigram_min_count (int, optional): Ignore all words and bigrams with total collected count lower than this value.. Defaults to 3.
+        bigram_threshold (int, optional): Represent a score threshold for forming the phrases (higher means fewer phrases). Defaults to 10.
+        nlp ([type], optional): A trained spacy pipeline package . Defaults to the default Spacy English pipeline model.
 
     Returns:
-        [type]: [description]
+        (iterable of list of (int, number)): Corpus; Document vectors or sparse matrix of shape (num_documents, num_terms), to be used as input to LDA model.
+        (dictionary): id2word; Mapping of lemmatized text from word IDs to words. It is used to determine the vocabulary size, as well as for debugging and topic printing.
+        (list of list of str): Texts: Processed and lemmatized texts.
+
     """
 
     # Remove punctuation
@@ -90,19 +93,20 @@ def get_texts_and_corpus(review_text,bigram_min_count=3,bigram_threshold=10,nlp=
     return corpus,id2word,texts
 
 def compute_coherence_values(corpus, dictionary, texts, k, a, b, min_prob):
-    """[summary]
+    """This function trains a LDA topic model given the provided inputs, and returns a calculated C_V topic coherence value.
+    For more information: https://radimrehurek.com/gensim/models/coherencemodel.html
 
     Args:
-        corpus ([type]): [description]
-        dictionary ([type]): [description]
-        texts ([type]): [description]
-        k ([type]): [description]
-        a ([type]): [description]
-        b ([type]): [description]
-        min_prob ([type]): [description]
+        corpus (iterable of list of (int, number)): Corpus in BoW format; Document vectors or sparse matrix of shape (num_documents, num_terms).
+        dictionary (dictionary): Gensim dictionary mapping of id word to create corpus. Mapping of text from word IDs to words.
+        texts (list of list of str): Tokenized texts.
+        k (int): The number of requested latent topics to be extracted from the training corpus.
+        a ({float, numpy.ndarray of float, list of float, str}): Alpha tuning parameter. A-priori belief on document-topic distribution.
+        b ({float, numpy.ndarray of float, list of float, str}): Eta tuning parameter. A-priori belief on topic-word distribution.
+        min_prob (float): Topics with a probability lower than this threshold will be filtered out.
 
     Returns:
-        [type]: [description]
+        (float): C_V Topic Coherence value.
     """
 
     lda_model = gensim.models.LdaMulticore(corpus=corpus,
@@ -120,14 +124,14 @@ def compute_coherence_values(corpus, dictionary, texts, k, a, b, min_prob):
     return coherence_model_lda.get_coherence()
 
 def lda_gridsearch(review_text,grid_search_params):
-    """[summary]
+    """Performs a gridsearch on the given hyperparameters and returns associated C_V topic coherence values for each set of parameters.
 
     Args:
-        review_text ([type]): [description]
-        grid_search_params ([type]): [description]
+        review_text (pandas Series): A series, or column from a pandas DataFrame containing text from which topics will be extracted.
+        grid_search_params (Dictionary): A dictionary, with a list of values to iterate through for each key, where keys are LDA model hyperparameters.
 
     Returns:
-        [type]: [description]
+        [pandas DataFrame]: A dataframe containing the topic coherence scores for each set of hyperparameters.
     """
 
     # Pct of Corpus to use:
@@ -190,15 +194,15 @@ def lda_gridsearch(review_text,grid_search_params):
 
 
 def get_top_distinct_words_per_topic(lda_model,num_words_to_show=10,num_words_init=10):
-    """[summary]
+    """Find the top n distinct words associated with each topic.
 
     Args:
-        lda_model ([type]): [description]
-        num_words_to_show (int, optional): [description]. Defaults to 10.
-        num_words_init (int, optional): [description]. Defaults to 10.
+        lda_model (gensim model): A trained gensim LDA model.
+        num_words_to_show (int, optional): Top n distinct words to show. Defaults to 10.
+        num_words_init (int, optional): An initial value for the iteration. Should be set at least equal to num_words_to_show. Defaults to 10.
 
     Returns:
-        [type]: [description]
+        [list of lists]: A list of topics, where each list item is a list with the top n distinct words associated with that topic.
     """
 
     num_words=num_words_init
