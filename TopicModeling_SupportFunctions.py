@@ -43,7 +43,7 @@ def get_texts_and_corpus(review_text,bigram_min_count=3,bigram_threshold=10,nlp=
     """
 
     # Remove punctuation
-    review_text['review_text_processed'] = review_text['review_text'].map(lambda x: re.sub('[,\.!?]', '', x))
+    review_text['review_text_processed'] = review_text["review_text"].map(lambda x: re.sub('[,\.!?]', '', x))
     # Convert the titles to lowercase
     review_text['review_text_processed'] = review_text['review_text_processed'].map(lambda x: x.lower())
 
